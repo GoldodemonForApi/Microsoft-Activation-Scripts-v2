@@ -511,6 +511,21 @@ echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (set "_ntarget=!_n
 )
 )
 
+::  Add LTSC and Home editions to the list, they are not reported by DISM Get-TargetEditions
+::  Note - Changing to these editions is not officially supported in-place and may require reinstall media
+
+if defined _ntarget if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
+if %winbuild% GEQ 26100 (
+for %%# in (WNC IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
+)
+) else (
+for %%# in (EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
+)
+)
+)
+
 if not defined _ntarget (
 %line%
 echo:
@@ -547,6 +562,18 @@ for %%A in (%_ntarget%) do (
 set /a counter+=1
 if /i %%A==IoTEnterprise (
 echo [!counter!]  %%A [GAC, not LTSC]
+) else if /i %%A==WNC (
+echo [!counter!]  %%A [Win 11 Enterprise LTSC 2024]
+) else if /i %%A==EnterpriseS (
+echo [!counter!]  %%A [Win 10 Enterprise LTSC 2019/2021]
+) else if /i %%A==IoTEnterpriseS (
+echo [!counter!]  %%A [IoT Enterprise LTSC 2021/2024]
+) else if /i %%A==Core (
+echo [!counter!]  %%A [Windows Home]
+) else if /i %%A==CoreN (
+echo [!counter!]  %%A [Windows Home N]
+) else if /i %%A==CoreSingleLanguage (
+echo [!counter!]  %%A [Windows Home Single Language]
 ) else (
 echo [!counter!]  %%A
 )
@@ -579,6 +606,22 @@ call :dk_color %Red% "==== Note ===="
 echo:
 echo Once the edition is changed to "%targetedition%", 
 echo the system may not be able to properly change edition later.
+echo:
+echo [1] Continue Anyway
+echo [0] Go Back
+echo:
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 goto cedmenu2
+if !errorlevel!==1 rem
+)
+
+for %%# in (WNC EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do if /i "%targetedition%"=="%%#" (
+echo:
+call :dk_color %Red% "==== Note ===="
+echo:
+echo Changing to "%%#" is not officially supported in-place by Windows.
+echo If the change fails, you will need to reinstall Windows with "%%#" media.
 echo:
 echo [1] Continue Anyway
 echo [0] Go Back
@@ -1425,6 +1468,8 @@ C4NTJ-CX6Q2-VXDMR-XVKGM-F9D%w%JC__Volume:MAK_EnterpriseG
 NJCF7-PW8QT-3324D-688JX-2YV%w%66______Retail_ServerRdsh
 XQQYW-NFFMW-XJPBH-K8732-CKF%w%FD______OEM:DM_IoTEnterprise
 QPM6N-7J2WJ-P88HH-P3YRH-YY7%w%4H__OEM:NONSLP_IoTEnterpriseS
+TMP2N-KGFHJ-PWM6F-68KCQ-3PJ%w%BP______Retail_WNC
+CGK42-GYN6Y-VD22B-BX98W-J8J%w%XD__OEM:NONSLP_IoTEnterpriseS_Ge
 K9VKN-3BGWV-Y624W-MCRMQ-BHD%w%CD______Retail_CloudEditionN
 KY7PN-VR6RX-83W6Y-6DDYQ-T6R%w%4W______Retail_CloudEdition
 V3WVW-N2PV2-CGWC3-34QGF-VMJ%w%2C______Retail_Cloud

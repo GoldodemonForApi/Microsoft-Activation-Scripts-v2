@@ -487,18 +487,20 @@ echo:             [7] Change Office Edition
 echo:             __________________________________________________      
 echo:
 echo:             [8] Troubleshoot
+echo:             [9] Turn Off Background Processes
 echo:             [E] Extras
 echo:             [H] Help
 echo:             [0] Exit
 echo:       ______________________________________________________________
 echo:
-call :dk_color2 %_White% "         " %_Green% "Choose a menu option using your keyboard [1,2,3...E,H,0] :"
-choice /C:12345678EH0 /N
+call :dk_color2 %_White% "         " %_Green% "Choose a menu option using your keyboard [1,2,3...9,E,H,0] :"
+choice /C:123456789EH0 /N
 set _erl=%errorlevel%
 
-if %_erl%==11 exit /b
-if %_erl%==10 (start %selfgit% & start %github% & start %mas%troubleshoot & goto :MainMenu)
-if %_erl%==9 goto :Extras
+if %_erl%==12 exit /b
+if %_erl%==11 (start %selfgit% & start %github% & start %mas%troubleshoot & goto :MainMenu)
+if %_erl%==10 goto :Extras
+if %_erl%==9 setlocal & call :process_toggle & cls & endlocal & goto :MainMenu
 if %_erl%==8 setlocal & call :troubleshoot      & cls & endlocal & goto :MainMenu
 if %_erl%==7 setlocal & call :change_offedition & cls & endlocal & goto :MainMenu
 if %_erl%==6 setlocal & call :change_winedition & cls & endlocal & goto :MainMenu
@@ -551,6 +553,203 @@ goto :Extras
 
 ::========================================================================================================================================
 
+:process_toggle
+
+cls
+title  Turn Off Background Processes
+if not defined terminal mode 76, 30
+
+set "procstate=%ProgramData%\MAS_ProcessToggle\state.txt"
+
+if %winbuild% LSS 10240 (
+echo:
+call :dk_color %Red% "Turn Off Background Processes [Not Supported]"
+call :dk_color %Blue% "This option is supported only on Windows 10/11 and their Server equivalents."
+echo:
+call :dk_color %_Yellow% "Press any key to go back to Main Menu..."
+pause %nul1%
+goto :MainMenu
+)
+
+echo:
+echo:
+echo:
+echo:
+if exist "%procstate%" (
+call :dk_color2 %_White% "          Background processes are currently " %_Yellow% "[OFF]"
+) else (
+call :dk_color2 %_White% "          Background processes are currently " %_Green% "[ON]"
+)
+echo:
+echo:           ______________________________________________________
+echo:
+echo:                [1] Turn Processes OFF
+echo:                [2] Turn Processes Back ON
+echo:                [3] View Current State
+echo:                ____________________________________________
+echo:
+echo:                [0] Go to Main Menu
+echo:           ______________________________________________________
+echo:
+call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,3,0] :"
+choice /C:1230 /N
+set _erl=%errorlevel%
+
+if %_erl%==4 goto :MainMenu
+if %_erl%==3 call :proc_view
+if %_erl%==2 call :proc_restore
+if %_erl%==1 call :proc_off
+goto :process_toggle
+
+::========================================================================================================================================
+
+:proc_off
+
+if exist "%procstate%" (
+call :dk_color %_Yellow% "Background processes are already turned off."
+call :dk_color %Blue% "Use the [2] Turn Processes Back ON option to restore them."
+echo:
+exit /b
+)
+
+echo:
+echo Turning off background processes...
+
+if not exist "%ProgramData%\MAS_ProcessToggle\" md "%ProgramData%\MAS_ProcessToggle\" %nul%
+
+::  Disable background app activity for the current user account
+
+set bak_reg=
+reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled %nul% && set bak_reg=1
+if defined bak_reg (
+for /f "skip=2 tokens=3" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled %nul6%') do echo GlobalUserDisabled %%a>>"%procstate%"
+) else (
+echo GlobalUserDisabled notset>>"%procstate%"
+)
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled /t REG_DWORD /d 1 /f %nul%
+echo Turn Off Background Apps Registry          [Successful]
+
+::  Disable telemetry and UX bloat registry settings
+
+call :proc_savereg "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" AllowTelemetry
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" Enabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" SubscribedContent-338389Enabled
+
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v Enabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338389Enabled /t REG_DWORD /d 0 /f %nul%
+echo Turn Off Telemetry / UX Bloat              [Successful]
+
+::  Disable non-essential background services
+
+set "proclist=DiagTrack dmwappushservice SysMain WSearch Spooler OneSyncSvc WMPNetworkSvc PcaSvc WerSvc Fax MapsBroker RetailDemo DusmSvc wcncsvc lfsvc SensrSvc SEMgrSvc TabletInputService PimIndexMaintenanceSvc HomeGroupProvider HomeGroupListener XboxGipSvc XboxNetApiSvc XblAuthManager XblGameSave"
+
+for %%# in (%proclist%) do (
+set prc=0
+sc query %%# %nul% && set prc=1
+if !prc!==1 (
+set runn=0
+sc query %%# | find /i "RUNNING" %nul1% && set runn=1
+set starttype=
+for /f "tokens=3" %%b in ('sc qc %%# ^| find /i "START_TYPE"') do if not defined starttype set starttype=%%b
+if defined starttype (
+echo %%# !starttype! !runn!>>"%procstate%"
+sc stop %%# %nul%
+sc config %%# start= disabled %nul%
+echo Turn Off Service [%%#]                     [Successful]
+) else (
+echo Turn Off Service [%%#]                     [Failed to get start type]
+)
+) else (
+echo Turn Off Service [%%#]                     [Not Found]
+)
+)
+
+echo:
+call :dk_color %Green% "Background processes are turned off. Restart your PC for the full effect."
+echo:
+exit /b
+
+::========================================================================================================================================
+
+:proc_restore
+
+if not exist "%procstate%" (
+call :dk_color %_Yellow% "Saved state not found, nothing to restore."
+call :dk_color %Blue% "If services were turned off manually, re-enable them in Services (services.msc)."
+echo:
+exit /b
+)
+
+echo:
+echo Turning background processes back on...
+
+for /f "tokens=1-3" %%a in (%procstate%) do (
+if /i "%%a"=="GlobalUserDisabled" (
+if /i "%%b"=="notset" (
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled /f %nul%
+) else (
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled /t REG_DWORD /d %%b /f %nul%
+)
+echo Turn On Background Apps Registry           [Successful]
+) else (
+set "ln=%%a"
+if /i "!ln:~0,4!"=="REG:" (
+set "ln=!ln:~4!"
+if /i "%%c"=="notset" (
+reg delete "!ln!" /v %%b /f %nul%
+) else (
+reg add "!ln!" /v %%b /t REG_DWORD /d %%c /f %nul%
+)
+echo Turn On Telemetry / UX Setting             [Successful]
+) else (
+sc config %%a start= %%b %nul%
+if "%%c"=="1" sc start %%a %nul%
+echo Turn On Service [%%a]                      [Successful]
+)
+)
+)
+
+del /f /q "%procstate%" %nul%
+rmdir "%ProgramData%\MAS_ProcessToggle" %nul%
+
+echo:
+call :dk_color %Green% "Background processes are turned back on."
+echo:
+exit /b
+
+::========================================================================================================================================
+
+
+::========================================================================================================================================
+:proc_view
+
+if not exist "%procstate%" (
+call :dk_color %_Yellow% "Nothing is currently turned off."
+echo:
+exit /b
+)
+
+echo:
+echo Currently disabled:
+for /f "tokens=1" %%a in (%procstate%) do (
+set "ln=%%a"
+if /i not "!ln:~0,4!"=="REG:" if /i not "%%a"=="GlobalUserDisabled" echo   - %%a
+)
+echo:
+exit /b
+
+::========================================================================================================================================
+:proc_savereg
+
+set rg=
+reg query "%~1" /v %2 %nul% && set rg=1
+if defined rg (
+for /f "skip=2 tokens=3" %%a in ('reg query "%~1" /v %2 %nul6%') do echo REG:%~1 %2 %%a>>"%procstate%"
+) else (
+echo REG:%~1 %2 notset>>"%procstate%"
+)
+exit /b
 :Extract$OEM$
 
 cls
@@ -12304,7 +12503,7 @@ if defined allapps if not defined key call :kmsfallback
 if defined altkey (set key=%altkey%&set changekey=1)
 
 set /a UBR=0
-if %osSKU%==191 if defined altkey if defined altedition (
+for %%# in (205 206) do if %osSKU%==%%# if defined altkey if defined altedition (
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v UBR %nul6%') do if not errorlevel 1 set /a UBR=%%b
 if %winbuild% LSS 22598 if !UBR! LSS 2788 (
 call :dk_color %Blue% "Windows must be updated to build 19044.2788 or higher for IotEnterpriseS %KS% activation."
@@ -14150,6 +14349,8 @@ e4db50ea-bda1-4566-b047-0ca50abc6f07_7NBT4-WGBQX-MP4H7-QXFF8-YP%f%3KX_175_Server
 59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PD%f%QGT_191_IoTEnterpriseS_VB,NI
 d30136fc-cb4b-416e-a23d-87207abc44a9_6XN7V-PCBDC-BDBRH-8DQY7-G6%f%R44_202_CloudEditionN
 ca7df2e3-5ea0-47b8-9ac1-b1be4d8edd69_37D7F-N49CB-WQR8W-TBJ73-FM%f%8RX_203_CloudEdition
+:: Windows 11 Enterprise LTSC 2024
+1bc2140b-285b-4351-b99c-26a126104b29_M7XTQ-FN8P6-TTKYV-9D4CC-J4%f%62D_210_WNC_Ge
 :: Windows 2016/19/22/25 LTSC/SAC
 7dc26449-db21-4e09-ba37-28f2958506a6_TVRH6-WHNXV-R9WG3-9XRFY-MY%f%832___7_ServerStandard_Ge
 9bd77860-9b31-4b7b-96ad-2564017315bf_VDYBN-27WPP-V4HQT-9VMD4-VM%f%K7H___7_ServerStandard_FE
@@ -14422,6 +14623,7 @@ if %_NoEditionChange%==1 exit /b
 
 for %%# in (
 205_IoTEnterpriseSK________________d4f9b41f-205c-405e-8e08-3d16e88e02be_59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PD%f%QGT_IoTEnterpriseS
+206_IoTEnterpriseK_________________80083eae-7031-4394-9e88-4901973d56fe_59eb965c-9150-42b7-a0ec-22151b9897c5_KBN8V-HFGQ4-MGXVD-347P6-PD%f%QGT_IoTEnterpriseS
 138_ProfessionalSingleLanguage_____a48938aa-62fa-4966-9d44-9f04da3f72f2_2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T8%f%3GX_Professional
 139_ProfessionalCountrySpecific____f7af7d09-40e4-419c-a49b-eae366689ebd_2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T8%f%3GX_Professional
 139_ProfessionalCountrySpecific-Zn_01eb852c-424d-4060-94b8-c10d799d7364_2de67392-b7a7-462a-b1ca-108dd189f588_W269N-WFGWX-YVC9B-4J6C9-T8%f%3GX_Professional
@@ -17300,6 +17502,21 @@ echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (set "_ntarget=!_n
 )
 )
 
+::  Add LTSC and Home editions to the list, they are not reported by DISM Get-TargetEditions
+::  Note - Changing to these editions is not officially supported in-place and may require reinstall media
+
+if defined _ntarget if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
+if %winbuild% GEQ 26100 (
+for %%# in (WNC IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
+)
+) else (
+for %%# in (EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
+)
+)
+)
+
 if not defined _ntarget (
 %line%
 echo:
@@ -17336,6 +17553,18 @@ for %%A in (%_ntarget%) do (
 set /a counter+=1
 if /i %%A==IoTEnterprise (
 echo [!counter!]  %%A [GAC, not LTSC]
+) else if /i %%A==WNC (
+echo [!counter!]  %%A [Win 11 Enterprise LTSC 2024]
+) else if /i %%A==EnterpriseS (
+echo [!counter!]  %%A [Win 10 Enterprise LTSC 2019/2021]
+) else if /i %%A==IoTEnterpriseS (
+echo [!counter!]  %%A [IoT Enterprise LTSC 2021/2024]
+) else if /i %%A==Core (
+echo [!counter!]  %%A [Windows Home]
+) else if /i %%A==CoreN (
+echo [!counter!]  %%A [Windows Home N]
+) else if /i %%A==CoreSingleLanguage (
+echo [!counter!]  %%A [Windows Home Single Language]
 ) else (
 echo [!counter!]  %%A
 )
@@ -17368,6 +17597,22 @@ call :dk_color %Red% "==== Note ===="
 echo:
 echo Once the edition is changed to "%targetedition%", 
 echo the system may not be able to properly change edition later.
+echo:
+echo [1] Continue Anyway
+echo [0] Go Back
+echo:
+call :dk_color %_Green% "Choose a menu option using your keyboard [1,0] :"
+choice /C:10 /N
+if !errorlevel!==2 goto cedmenu2
+if !errorlevel!==1 rem
+)
+
+for %%# in (WNC EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do if /i "%targetedition%"=="%%#" (
+echo:
+call :dk_color %Red% "==== Note ===="
+echo:
+echo Changing to "%%#" is not officially supported in-place by Windows.
+echo If the change fails, you will need to reinstall Windows with "%%#" media.
 echo:
 echo [1] Continue Anyway
 echo [0] Go Back
@@ -17991,6 +18236,8 @@ C4NTJ-CX6Q2-VXDMR-XVKGM-F9D%w%JC__Volume:MAK_EnterpriseG
 NJCF7-PW8QT-3324D-688JX-2YV%w%66______Retail_ServerRdsh
 XQQYW-NFFMW-XJPBH-K8732-CKF%w%FD______OEM:DM_IoTEnterprise
 QPM6N-7J2WJ-P88HH-P3YRH-YY7%w%4H__OEM:NONSLP_IoTEnterpriseS
+TMP2N-KGFHJ-PWM6F-68KCQ-3PJ%w%BP______Retail_WNC
+CGK42-GYN6Y-VD22B-BX98W-J8J%w%XD__OEM:NONSLP_IoTEnterpriseS_Ge
 K9VKN-3BGWV-Y624W-MCRMQ-BHD%w%CD______Retail_CloudEditionN
 KY7PN-VR6RX-83W6Y-6DDYQ-T6R%w%4W______Retail_CloudEdition
 V3WVW-N2PV2-CGWC3-34QGF-VMJ%w%2C______Retail_Cloud
