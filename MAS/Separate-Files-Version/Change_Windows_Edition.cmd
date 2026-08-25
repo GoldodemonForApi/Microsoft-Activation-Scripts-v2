@@ -511,18 +511,25 @@ echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (set "_ntarget=!_n
 )
 )
 
-::  Add LTSC and Home editions to the list, they are not reported by DISM Get-TargetEditions
+::  Add LTSC editions to the list, they are not reported by DISM Get-TargetEditions
 ::  Note - Changing to these editions is not officially supported in-place and may require reinstall media
 
 if defined _ntarget if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 if %winbuild% GEQ 26100 (
-for %%# in (WNC IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+for %%# in (WNC IoTEnterpriseS) do (
 echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
 )
 ) else (
-for %%# in (EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+for %%# in (EnterpriseS IoTEnterpriseS) do (
 echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
 )
+)
+)
+
+::  Add CloudEdition (Windows 365) - officially targetable by DISM, but irreversible
+if defined _ntarget (
+for %%# in (CloudEdition CloudEditionN) do (
+echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
 )
 )
 
@@ -568,12 +575,10 @@ echo [!counter!]  %%A [Win 11 Enterprise LTSC 2024]
 echo [!counter!]  %%A [Win 10 Enterprise LTSC 2019/2021]
 ) else if /i %%A==IoTEnterpriseS (
 echo [!counter!]  %%A [IoT Enterprise LTSC 2021/2024]
-) else if /i %%A==Core (
-echo [!counter!]  %%A [Windows Home]
-) else if /i %%A==CoreN (
-echo [!counter!]  %%A [Windows Home N]
-) else if /i %%A==CoreSingleLanguage (
-echo [!counter!]  %%A [Windows Home Single Language]
+) else if /i %%A==CloudEdition (
+echo [!counter!]  %%A [Windows 365 - irreversible, may break edition changes]
+) else if /i %%A==CloudEditionN (
+echo [!counter!]  %%A [Windows 365 N - irreversible, may break edition changes]
 ) else (
 echo [!counter!]  %%A
 )
@@ -597,10 +602,27 @@ if %verified%==0 goto cedmenu2
 if %winbuild% LSS 10240 goto :cbsmethod
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" goto :ced_change_server
 
+::  Pre-flight check - refuse in-place changes to editions that Windows does not support
+if not "!_dtarget!"=="" (
+echo "!_dtarget!" | find /i " %targetedition% " %nul1% || (
+cls
+echo:
+call :dk_color %Red% "==== Note ===="
+echo:
+echo Windows does not support changing the current edition [%osedition%] to [%targetedition%] in-place.
+echo This change requires reinstalling Windows with [%targetedition%] media.
+echo:
+call :dk_color %Gray% "Editions that can be changed to in-place:%_dtarget%"
+echo:
+call :dk_color %_Yellow% "Press any key to go back to the edition list..."
+pause %nul1%
+goto cedmenu2
+)
+)
 cls
 if not defined terminal mode con cols=105 lines=32
 
-if /i "%targetedition%"=="ServerRdsh" (
+for %%# in (ServerRdsh CloudEdition CloudEditionN) do if /i "%targetedition%"=="%%#" (
 echo:
 call :dk_color %Red% "==== Note ===="
 echo:
@@ -616,7 +638,7 @@ if !errorlevel!==2 goto cedmenu2
 if !errorlevel!==1 rem
 )
 
-for %%# in (WNC EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do if /i "%targetedition%"=="%%#" (
+for %%# in (WNC EnterpriseS IoTEnterpriseS) do if /i "%targetedition%"=="%%#" (
 echo:
 call :dk_color %Red% "==== Note ===="
 echo:
@@ -728,7 +750,13 @@ call :ced_prep
 if defined preperror goto dk_done
 
 %psc% "$f=[IO.File]::ReadAllText('!_batp!') -split ':dismapi\:.*';. ([scriptblock]::Create($f[1])) %targetedition% %key%"
+set dismerror=!errorlevel!
 call :ced_postprep
+if !dismerror! NEQ 0 (
+call :dk_color %Red% "[Unsuccessful] The edition change failed."
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 )
 %line%
 
@@ -815,8 +843,13 @@ if defined preperror goto dk_done
 echo Applying the command with %_chan% key...
 echo DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
-
+set dismerror=!errorlevel!
 call :ced_postprep
+if !dismerror! NEQ 0 (
+call :dk_color %Red% "[Unsuccessful] The edition change failed."
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 %line%
 
 goto dk_done
@@ -1409,9 +1442,14 @@ $Dism = $TB.CreateType()
 [void]$Dism::DismInitialize(2, 0, 0)
 $Session = 0
 [void]$Dism::DismOpenSession('DISM_{53BFAE52-B167-4E2F-A258-0A37B57FF845}', 0, 0, [ref]$Session)
-if (!$Dism::_DismSetEdition($Session, "$TargetEdition", "$Key", 0, 0, 0)) {
+$hr = $Dism::_DismSetEdition($Session, "$TargetEdition", "$Key", 0, 0, 0)
+if ($hr -eq 0) {
     Restart-Computer
+    exit 0
 }
+Write-Host "Edition change failed with error code: 0x$('{0:X8}' -f $hr)" -ForegroundColor Red
+exit 1
+
 :dismapi:]
 
 ::========================================================================================================================================
