@@ -629,20 +629,58 @@ echo GlobalUserDisabled notset>>"%procstate%"
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled /t REG_DWORD /d 1 /f %nul%
 echo Turn Off Background Apps Registry          [Successful]
 
-::  Disable telemetry and UX bloat registry settings
+::  Disable telemetry and UX bloat registry settings - Chris Titus Tech style privacy/performance pack
 
 call :proc_savereg "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" AllowTelemetry
 call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" Enabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" SubscribedContent-338388Enabled
 call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" SubscribedContent-338389Enabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" SubscribedContent-353698Enabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" SilentInstalledAppsEnabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" SystemPaneSuggestionsEnabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" SoftLandingEnabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" RotatingLockScreenOverlayEnabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" BingSearchEnabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" CortanaConsent
+call :proc_savereg "HKCU\Software\Policies\Microsoft\Windows\Explorer" DisableSearchBoxSuggestions
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR" AppCaptureEnabled
+call :proc_savereg "HKCU\System\GameConfigStore" GameDVR_Enabled
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" EnableActivityFeed
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" PublishUserActivities
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" UploadUserActivities
+call :proc_savereg "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" TailoredExperiencesWithDiagnosticDataEnabled
+call :proc_savereg "HKCU\Software\Microsoft\Siuf\Rules" NumberOfSIUFInPeriod
+call :proc_savereg "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting" Disabled
+call :proc_savereg "HKLM\Software\Microsoft\WcmSvc\wifinetworkmanager\config" AutoConnectAllowedOEM
+call :proc_savereg "HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" DODownloadMode
 
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f %nul%
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v Enabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338388Enabled /t REG_DWORD /d 0 /f %nul%
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338389Enabled /t REG_DWORD /d 0 /f %nul%
-echo Turn Off Telemetry / UX Bloat              [Successful]
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-353698Enabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SilentInstalledAppsEnabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SystemPaneSuggestionsEnabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SoftLandingEnabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v RotatingLockScreenOverlayEnabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v BingSearchEnabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v CortanaConsent /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\GameDVR" /v AppCaptureEnabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\System\GameConfigStore" /v GameDVR_Enabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /v EnableActivityFeed /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /v PublishUserActivities /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /v UploadUserActivities /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Privacy" /v TailoredExperiencesWithDiagnosticDataEnabled /t REG_DWORD /d 0 /f %nul%
+reg add "HKCU\Software\Microsoft\Siuf\Rules" /v NumberOfSIUFInPeriod /t REG_DWORD /d 0 /f %nul%
+reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v Disabled /t REG_DWORD /d 1 /f %nul%
+reg add "HKLM\Software\Microsoft\WcmSvc\wifinetworkmanager\config" /v AutoConnectAllowedOEM /t REG_DWORD /d 0 /f %nul%
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" /v DODownloadMode /t REG_DWORD /d 0 /f %nul%
+echo Turn Off Telemetry / UX Bloat              [22 tweaks]
 
 ::  Disable non-essential background services
 
-set "proclist=DiagTrack dmwappushservice SysMain WSearch Spooler OneSyncSvc WMPNetworkSvc PcaSvc WerSvc Fax MapsBroker RetailDemo DusmSvc wcncsvc lfsvc SensrSvc SEMgrSvc TabletInputService PimIndexMaintenanceSvc HomeGroupProvider HomeGroupListener XboxGipSvc XboxNetApiSvc XblAuthManager XblGameSave"
+set "proclist=DiagTrack dmwappushservice SysMain WSearch Spooler OneSyncSvc WMPNetworkSvc PcaSvc WerSvc Fax MapsBroker RetailDemo DusmSvc wcncsvc lfsvc SensrSvc SEMgrSvc PimIndexMaintenanceSvc XboxGipSvc XboxNetApiSvc XblAuthManager XblGameSave DiagSvc diagsvc TapiSrv WdiServiceHost WdiSystemHost RemoteRegistry PhoneSvc WalletService NetTcpPortSharing SCardSvr ScDeviceEnum SDRSVC TrkWks EntAppSvc DoSvc iphlpsvc MessagingService WpcMonSvc RpcLocator CscService"
 
 for %%# in (%proclist%) do (
 set prc=0
@@ -664,6 +702,34 @@ echo Turn Off Service [%%#]                     [Failed to get start type]
 echo Turn Off Service [%%#]                     [Not Found]
 )
 )
+::  Disable telemetry scheduled tasks - Chris Titus Tech style
+
+call :proc_savetask "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser"
+call :proc_savetask "\Microsoft\Windows\Application Experience\ProgramDataUpdater"
+call :proc_savetask "\Microsoft\Windows\Application Experience\StartupAppTask"
+call :proc_savetask "\Microsoft\Windows\Application Experience\Proxy"
+call :proc_savetask "\Microsoft\Windows\Autochk\Proxy"
+call :proc_savetask "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator"
+call :proc_savetask "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip"
+call :proc_savetask "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask"
+call :proc_savetask "\Microsoft\Windows\Customer Experience Improvement Program\Uploader"
+call :proc_savetask "\Microsoft\Windows\Feedback\Siuf\DmClient"
+call :proc_savetask "\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload"
+call :proc_savetask "\Microsoft\Windows\Windows Error Reporting\QueueReporting"
+call :proc_savetask "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector"
+call :proc_savetask "\Microsoft\Windows\Maps\MapsToastTask"
+call :proc_savetask "\Microsoft\Windows\Maps\MapsUpdateTask"
+echo Turn Off Telemetry Scheduled Tasks        [15 tasks]
+
+::  Switch to High Performance power plan (previous plan is saved)
+
+set powguid=
+for /f "tokens=4" %%g in ('powercfg /getactivescheme 2^>nul') do if not defined powguid set powguid=%%g
+if defined powguid (
+(echo POWER:!powguid!)>>"%procstate%"
+powercfg /setactive SCHEME_MIN %nul%
+echo Switched to High Performance Power Plan   [Saved previous]
+)
 
 echo:
 call :dk_color %Green% "Background processes are turned off. Restart your PC for the full effect."
@@ -684,25 +750,38 @@ exit /b
 echo:
 echo Turning background processes back on...
 
-for /f "tokens=1-3" %%a in (%procstate%) do (
-if /i "%%a"=="GlobalUserDisabled" (
+for /f "usebackq delims=" %%L in ("%procstate%") do (
+set "line=%%L"
+if /i "!line:~0,7!"=="GlobalU" (
+for /f "tokens=2" %%b in ("!line!") do (
 if /i "%%b"=="notset" (
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled /f %nul%
 ) else (
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled /t REG_DWORD /d %%b /f %nul%
 )
 echo Turn On Background Apps Registry           [Successful]
-) else (
-set "ln=%%a"
-if /i "!ln:~0,4!"=="REG:" (
-set "ln=!ln:~4!"
+)
+) else if /i "!line:~0,4!"=="REG:" (
+for /f "tokens=1-3" %%a in ("!line!") do (
+set "rp=%%a"
+set "rp=!rp:~4!"
 if /i "%%c"=="notset" (
-reg delete "!ln!" /v %%b /f %nul%
+reg delete "!rp!" /v %%b /f %nul%
 ) else (
-reg add "!ln!" /v %%b /t REG_DWORD /d %%c /f %nul%
+reg add "!rp!" /v %%b /t REG_DWORD /d %%c /f %nul%
 )
 echo Turn On Telemetry / UX Setting             [Successful]
+)
+) else if /i "!line:~0,5!"=="TASK:" (
+set "tn=!line:~5!"
+schtasks /change /tn "!tn!" /enable %nul%
+echo Turn On Scheduled Task                     [Successful]
+) else if /i "!line:~0,6!"=="POWER:" (
+set "pg=!line:~6!"
+powercfg /setactive !pg! %nul%
+echo Restored Previous Power Plan               [Successful]
 ) else (
+for /f "tokens=1-3" %%a in ("!line!") do (
 sc config %%a start= %%b %nul%
 if "%%c"=="1" sc start %%a %nul%
 echo Turn On Service [%%a]                      [Successful]
@@ -732,10 +811,25 @@ exit /b
 
 echo:
 echo Currently disabled:
-for /f "tokens=1" %%a in (%procstate%) do (
-set "ln=%%a"
-if /i not "!ln:~0,4!"=="REG:" if /i not "%%a"=="GlobalUserDisabled" echo   - %%a
+set regc=0
+set taskc=0
+set srvc=0
+for /f "usebackq delims=" %%L in ("%procstate%") do (
+set "ln=%%L"
+if /i "!ln:~0,4!"=="REG:" set /a regc+=1
+if /i "!ln:~0,5!"=="TASK:" set /a taskc+=1
+if /i "!ln:~0,6!"=="POWER:" (
+echo   - High Performance plan active ^(saved previous^)
+) else if /i "!ln:~0,4!"=="REG:" (
+rem counted above
+) else if /i "!ln:~0,5!"=="TASK:" (
+rem counted above
+) else if /i "!ln:~0,7!"=="GlobalU" (
+rem background apps flag
+) else echo   - !ln!
 )
+if %regc% GTR 0 call :dk_color %Gray% "  + %regc% telemetry / UX registry tweaks"
+if %taskc% GTR 0 call :dk_color %Gray% "  + %taskc% scheduled tasks disabled"
 echo:
 exit /b
 
@@ -749,6 +843,13 @@ for /f "skip=2 tokens=3" %%a in ('reg query "%~1" /v %2 %nul6%') do echo REG:%~1
 ) else (
 echo REG:%~1 %2 notset>>"%procstate%"
 )
+exit /b
+
+:proc_savetask
+
+schtasks /query /tn "%~1" %nul% || exit /b
+schtasks /change /tn "%~1" /disable %nul%
+(echo TASK:%~1)>>"%procstate%"
 exit /b
 :Extract$OEM$
 
@@ -17502,18 +17603,25 @@ echo %%# | findstr /i "CountrySpecific CloudEdition" %nul% || (set "_ntarget=!_n
 )
 )
 
-::  Add LTSC and Home editions to the list, they are not reported by DISM Get-TargetEditions
+::  Add LTSC editions to the list, they are not reported by DISM Get-TargetEditions
 ::  Note - Changing to these editions is not officially supported in-place and may require reinstall media
 
 if defined _ntarget if %winbuild% GEQ 10240 if not exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" (
 if %winbuild% GEQ 26100 (
-for %%# in (WNC IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+for %%# in (WNC IoTEnterpriseS) do (
 echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
 )
 ) else (
-for %%# in (EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do (
+for %%# in (EnterpriseS IoTEnterpriseS) do (
 echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
 )
+)
+)
+
+::  Add CloudEdition (Windows 365) - officially targetable by DISM, but irreversible
+if defined _ntarget (
+for %%# in (CloudEdition CloudEditionN) do (
+echo "!_ntarget!" | find /i " %%# " %nul1% || set "_ntarget=!_ntarget! %%#"
 )
 )
 
@@ -17559,12 +17667,10 @@ echo [!counter!]  %%A [Win 11 Enterprise LTSC 2024]
 echo [!counter!]  %%A [Win 10 Enterprise LTSC 2019/2021]
 ) else if /i %%A==IoTEnterpriseS (
 echo [!counter!]  %%A [IoT Enterprise LTSC 2021/2024]
-) else if /i %%A==Core (
-echo [!counter!]  %%A [Windows Home]
-) else if /i %%A==CoreN (
-echo [!counter!]  %%A [Windows Home N]
-) else if /i %%A==CoreSingleLanguage (
-echo [!counter!]  %%A [Windows Home Single Language]
+) else if /i %%A==CloudEdition (
+echo [!counter!]  %%A [Windows 365 - irreversible, may break edition changes]
+) else if /i %%A==CloudEditionN (
+echo [!counter!]  %%A [Windows 365 N - irreversible, may break edition changes]
 ) else (
 echo [!counter!]  %%A
 )
@@ -17588,10 +17694,27 @@ if %verified%==0 goto cedmenu2
 if %winbuild% LSS 10240 goto :cbsmethod
 if exist "%SystemRoot%\Servicing\Packages\Microsoft-Windows-Server*Edition~*.mum" goto :ced_change_server
 
+::  Pre-flight check - refuse in-place changes to editions that Windows does not support
+if not "!_dtarget!"=="" (
+echo "!_dtarget!" | find /i " %targetedition% " %nul1% || (
+cls
+echo:
+call :dk_color %Red% "==== Note ===="
+echo:
+echo Windows does not support changing the current edition [%osedition%] to [%targetedition%] in-place.
+echo This change requires reinstalling Windows with [%targetedition%] media.
+echo:
+call :dk_color %Gray% "Editions that can be changed to in-place:%_dtarget%"
+echo:
+call :dk_color %_Yellow% "Press any key to go back to the edition list..."
+pause %nul1%
+goto cedmenu2
+)
+)
 cls
 if not defined terminal mode con cols=105 lines=32
 
-if /i "%targetedition%"=="ServerRdsh" (
+for %%# in (ServerRdsh CloudEdition CloudEditionN) do if /i "%targetedition%"=="%%#" (
 echo:
 call :dk_color %Red% "==== Note ===="
 echo:
@@ -17607,7 +17730,7 @@ if !errorlevel!==2 goto cedmenu2
 if !errorlevel!==1 rem
 )
 
-for %%# in (WNC EnterpriseS IoTEnterpriseS Core CoreN CoreSingleLanguage) do if /i "%targetedition%"=="%%#" (
+for %%# in (WNC EnterpriseS IoTEnterpriseS) do if /i "%targetedition%"=="%%#" (
 echo:
 call :dk_color %Red% "==== Note ===="
 echo:
@@ -17719,7 +17842,13 @@ call :ced_prep
 if defined preperror goto dk_done
 
 %psc% "$f=[IO.File]::ReadAllText('!_batp!') -split ':dismapi\:.*';. ([scriptblock]::Create($f[1])) %targetedition% %key%"
+set dismerror=!errorlevel!
 call :ced_postprep
+if !dismerror! NEQ 0 (
+call :dk_color %Red% "[Unsuccessful] The edition change failed."
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 )
 %line%
 
@@ -17806,8 +17935,13 @@ if defined preperror goto dk_done
 echo Applying the command with %_chan% key...
 echo DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
 DISM /online /Set-Edition:%targetedition% /ProductKey:%key% /AcceptEula
-
+set dismerror=!errorlevel!
 call :ced_postprep
+if !dismerror! NEQ 0 (
+call :dk_color %Red% "[Unsuccessful] The edition change failed."
+set fixes=%fixes% %mas%troubleshoot
+call :dk_color2 %Blue% "Check this webpage for help - " %_Yellow% " %mas%troubleshoot"
+)
 %line%
 
 goto dk_done
@@ -18177,9 +18311,14 @@ $Dism = $TB.CreateType()
 [void]$Dism::DismInitialize(2, 0, 0)
 $Session = 0
 [void]$Dism::DismOpenSession('DISM_{53BFAE52-B167-4E2F-A258-0A37B57FF845}', 0, 0, [ref]$Session)
-if (!$Dism::_DismSetEdition($Session, "$TargetEdition", "$Key", 0, 0, 0)) {
+$hr = $Dism::_DismSetEdition($Session, "$TargetEdition", "$Key", 0, 0, 0)
+if ($hr -eq 0) {
     Restart-Computer
+    exit 0
 }
+Write-Host "Edition change failed with error code: 0x$('{0:X8}' -f $hr)" -ForegroundColor Red
+exit 1
+
 :dismapi:]
 
 ::========================================================================================================================================
