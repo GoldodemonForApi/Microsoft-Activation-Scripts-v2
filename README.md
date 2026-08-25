@@ -80,5 +80,24 @@
 
 ---
 
+## Changes in This Fork
+
+### [9] Turn Off Background Processes - CTT-style optimization
+
+- One-click toggle in `MAS_AIO.cmd` that turns off background process bloat, inspired by Chris Titus Tech's Windows Utility:
+  - **42** non-essential background services stopped and disabled
+  - **22** privacy/performance registry tweaks (telemetry, Bing/Cortana search, Game DVR, activity history, Wi-Fi Sense, Delivery Optimization, ads and suggested content)
+  - **15** telemetry scheduled tasks disabled (CEIP, Compatibility Appraiser, error-reporting queue, Maps, ...)
+  - Switches to the **High Performance** power plan
+- Everything is saved to `%ProgramData%\MAS_ProcessToggle\state.txt`; **[2] Turn Processes Back ON** restores every service start type, registry value, scheduled task, and your original power plan exactly.
+
+### Change Windows Edition improvements
+
+- New changeable targets: Windows 11/10 **LTSC** (`WNC`, `EnterpriseS`, `IoTEnterpriseS`) and **CloudEdition**, with clear warnings where an in-place change is unsupported or irreversible
+- A pre-flight check refuses in-place changes Windows does not support (for example Pro to Home/LTSC) with a plain explanation instead of a cryptic DISM error code
+- DISM/CBS failures are now surfaced instead of being silently swallowed
+
+---
+
 Latest Version: 3.12  
 Release date: 04-Jul-2026
